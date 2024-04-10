@@ -1,0 +1,484 @@
+Veja abaixo todos os códigos  do e-book sobre VPS
+
+Capítulo 3
+```bash
+Com isso ele mostra acima os nameservers da Contabo
+
+ns1.contabo.net (79.143.182.242, 2a02:c205:0:0882::1)
+ns2.contabo.net (178.238.234.231, 2a02:c205:0:0891::1)
+ns3.contabo.net (5.189.191.29, 2a02:c207:0:0842::1)
+
+Item 6.2
+
+Criação da swap
+
+fallocate -l 1G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+
+nano /etc/fstab
+
+Adicione ao final
+/swapfile swap swap defaults 0 0
+
+Item 6.3
+
+Configurar o SSH
+nano /etc/ssh/sshd_config
+Port 62222
+LoginGraceTime 30
+PermitRootLogin no
+MaxAuthTries 3
+X11Forwarding no
+AllowUsers ribamarfs
+
+Configurar o firewall
+
+Abrir somente estas 3 portas, todas as demais ficarão fechadas.
+
+ufw allow 60222
+ufw allow 80
+ufw allow 443
+
+
+Item 6.4
+
+ssh -p 60222 ribamarfs@84.247.172.72
+
+sudo apt update
+sudo apt upgrade -y
+
+Instalar o Nginx
+
+sudo apt install nginx -y
+
+Testar
+
+http://84.247.172.72
+
+Instalar MariaDb
+
+sudo apt install mariadb-server -y
+
+Melhorar a segurança do MariaDb
+
+sudo mysql_secure_installation
+
+Testando
+
+mysql -uroot -p
+
+Para adicionar suporte ao PHP no Nginx
+Instalar e usar o PHP-FPM para executar arquivos PHP
+
+sudo apt install aptitude git composer mc curl phpunit ssh imagemagick zip unzip -y
+sudo apt install php-fpm php-mysql php-gd php-cli php-curl php-mbstring php-zip php-opcache php-xml php-bcmath php-pear php-imagick php-tidy php-xmlrpc php-intl php-xdebug php-apcu php-redis -y
+sudo mkdir -p /etc/apt/keyrings
+
+NODE_MAJOR=20
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+sudo apt update
+sudo apt install nodejs -y
+sudo apt update && sudo apt install -y yarn
+
+
+Item 6.5
+
+Name - frangomontese.com.br
+Type - A
+Data - 84.247.172.72
+
+Name - www.frangomontese.com.br
+Type - CNAME
+Data - frangomontese.com.br
+
+Name - blog.ribamar.net.br
+Type - A
+Data - 84.247.172.72
+Create record
+blog.ribamar.net.br 	86400 	A 	0 	84.247.172.72
+
+Name - www.blog.ribamar.net.br
+Type - CNAME
+Data - blog.ribamar.net.br
+
+Name - material.ribamar.net.br
+Type - A
+Data - 84.247.172.72
+(Este é criado somente para abrigar um redirecionamento para o site no GH)
+
+Name - eletrotekcellfortaleza.ribamar.net.br
+Type - A
+Data - 84.247.172.72
+
+Name - testes.ribamar.net.br
+Type - A
+Data – 84.247.172.72
+
+
+Item 6.6
+
+cd /etc/nginx/sites-available
+
+sudo rm default
+sudo nano default
+
+server {
+	listen 80;
+	listen [::]:80;
+	root /var/www/html;
+	index index.html index.php;
+	server_name ribamar.net.br www.ribamar.net.br;
+	
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+	}
+}
+
+Para o default não há necessidade de criar o link simbólico
+
+sudo nano frango
+
+server {
+	listen 80;
+	listen [::]:80;
+	root /var/www/frango;
+	index index.html index.php;
+	server_name frangomontese.com.br www.frangomontese.com.br;
+	
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+	}
+}
+
+sudo ln -s /etc/nginx/sites-available/frango /etc/nginx/sites-enabled/frango
+sudo nano testes
+
+server {
+	listen 80;
+	listen [::]:80;
+	root /var/www/testes;
+	index index.html index.php;
+	server_name testes.ribamar.net.br;
+	
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+	}
+}
+
+sudo ln -s /etc/nginx/sites-available/testes /etc/nginx/sites-enabled/testes
+
+sudo nano blog
+
+server {
+	listen 80;
+	listen [::]:80;
+	root /var/www/blog;
+	index index.html index.php;
+	server_name blog.ribamar.net.br www.blog.ribamar.net.br;
+	
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+	}
+}
+
+sudo ln -s /etc/nginx/sites-available/blog /etc/nginx/sites-enabled/blog
+
+Observe que o default não precisa de link simbólico.
+
+
+sudo nano eletro
+
+server {
+	listen 80;
+	listen [::]:80;
+	root /var/www/eletro;
+	index index.html index.php;
+	server_name eletrotekcellfortaleza.ribamar.net.br;
+	
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+	}
+}
+
+sudo ln -s /etc/nginx/sites-available/eletro /etc/nginx/sites-enabled/eletro
+
+sudo nano material
+
+server {
+	listen 80;
+	listen [::]:80;
+	root /var/www/material;
+	index index.html index.php;
+	server_name material.ribamar.net.br;
+	
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+	}
+}
+
+sudo ln -s /etc/nginx/sites-available/material /etc/nginx/sites-enabled/material
+
+sudo nano frango
+
+server {
+	listen 80;
+	listen [::]:80;
+	root /var/www/frango;
+	index index.html index.php;
+	server_name frangomontese.com.br www.frangomontese.com.br;
+	
+	location / {
+		try_files $uri $uri/ /index.php?$args;
+	}
+	
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+	}
+}
+
+sudo ln -s /etc/nginx/sites-available/frango /etc/nginx/sites-enabled/frango
+
+
+Item 6.7
+
+sudo nano /usr/local/bin/perms
+
+#!/bin/sh
+clear;
+echo "Aguarde enquanto configuro as permissões do /var/www/$1";
+echo "";
+chown -R ribamarfs:www-data /var/www/$1;
+find /var/www/$1 -type d -exec chmod 775 {} \;
+find /var/www/$1 -type f -exec chmod 664 {} \;
+find /var/www/$1 -type d -exec chmod g+s {} \;
+echo "";
+echo "Concluído!";
+
+sudo chmod +x /usr/local/bin/perms
+
+Usando
+
+sudo perms (varre toda a /var/www)
+sudo perms html(varre /var/www/html)
+
+
+Item 6.8
+
+Já tenho aqui os comandos então
+
+sudo apt update
+sudo apt install snapd -y
+sudo snap install --classic certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
+Configurar o SSL
+
+sudo certbot --nginx
+
+Entre com seu e-mail
+Y
+Y
+Enter
+para todos
+
+Renovação automática
+
+sudo certbot renew --dry-run
+
+
+Item 6.8
+
+sudo mysql
+create database ribamar_db CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE USER 'ribamar_us'@'localhost' IDENTIFIED BY 'zmxn1029R@';
+GRANT ALL PRIVILEGES ON ribamar_db.* TO 'ribamar_us'@'localhost' WITH GRANT OPTION;
+
+create database blog_db CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE USER 'blog_us'@'localhost' IDENTIFIED BY 'zmxn1029B@';
+GRANT ALL PRIVILEGES ON blog_db.* TO 'blog_us'@'localhost' WITH GRANT OPTION;
+
+create database eletro_db CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE USER 'eletro_us'@'localhost' IDENTIFIED BY 'zmxn1029E@';
+GRANT ALL PRIVILEGES ON eletro_db.* TO 'eletro_us'@'localhost' WITH GRANT OPTION;
+
+create database testes_db CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE USER 'testes_us'@'localhost' IDENTIFIED BY 'zmxn1029T@';
+GRANT ALL PRIVILEGES ON testes_db.* TO 'testes_us'@'localhost' WITH GRANT OPTION;
+
+create database frango_db CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE USER 'frango_us'@'localhost' IDENTIFIED BY 'zmxn1029F@';
+GRANT ALL PRIVILEGES ON frango_db.* TO 'frango_us'@'localhost' WITH GRANT OPTION;
+
+
+
+Item 6.10
+
+mkdir /home/ribamarfs/backups
+
+mysqldump -uroot -pzmxn1029M@ ribamar_db > /home/ribamarfs/backups/ribamar_$(date +"%Y_%m_%d").sql
+cd /var/www/
+zip -rq /home/ribamarfs/backups/ribamar_$(date +"%Y_%m_%d").zip html
+
+Veja que eu salvo na pasta /home/ribamarfs/backups e depois baixo dela para o meu desktop.
+
+Com este sufixo
+_$(date +"%Y_%m_%d")
+
+Temos um backup por dia. Caso queira uma frequência maior, use algo como:
+_$(date +"%Y_%m_%d:%H:%i")
+
+
+Item 6.11
+
+cd /home/ribamarfs
+
+nano .bashrc
+
+alias c="clear"
+alias e="exit"
+alias cw="cd /var/www"
+alias nr="sudo systemctl restart php8.2-fpm nginx"
+# Executar o backup manualmente
+alias backup="sh /home/ribamarfs/backupdiario"
+alias s="sudo su"
+alias rc="nano .bashrc"
+alias rcs="source ~/.bashrc"
+alias phpi="sudo nano /etc/php/8.2/fpm/php.ini;nr"
+
+
+Aliases no desktop que agem com o servidor
+
+# Trazer para a pasta atual do desktop todos os arquivos da pasta /home/ribamarfs/backups do servidor
+alias backup="scp -P 60222 ribamarfs@ribamar.net.br:/home/ribamarfs/backups/* ."
+
+# Acessar o servidor via SSH
+alias s="ssh -p 60222 ribamarfs@ribamar.net.br"
+
+# Mostrar maiores arquivos da pasta atual em ordem decrescente
+alias maiores="du -h | egrep -v "\./.+/" | sort -hr"
+
+backup manual
+
+nano /home/ribamarfs/backup
+
+rm -rf /home/ribamarfs/backups/*
+mysqldump -uroot -pzmxn1029M@ ribamar_db > /home/ribamarfs/backups/ribamar_$(date +"%Y_%m_%d").sql
+mysqldump -uroot -pzmxn1029M@ blog_db > /home/ribamarfs/backups/blog_$(date +"%Y_%m_%d").sql
+mysqldump -uroot -pzmxn1029M@ eletro_db > /home/ribamarfs/backups/eletro_$(date +"%Y_%m_%d").sql
+
+cd /var/www/
+zip -rq /home/ribamarfs/backups/ribamar_$(date +"%Y_%m_%d").zip html
+zip -rq /home/ribamarfs/backups/blog_$(date +"%Y_%m_%d").zip blog
+zip -rq /home/ribamarfs/backups/eletro_$(date +"%Y_%m_%d").zip eletro
+
+cp -f /home/ribamarfs/backup /home/ribamarfs/backups
+
+backupdia
+
+/home/ribamarfs/backupdia
+
+#rm -rf /home/ribamarfs/backups/*
+mysqldump -uroot -pzmxn1029M@ ribamar_db > /home/ribamarfs/backups/ribamar_$(date +"%Y_%m_%d").sql
+cd /var/www/
+#zip -rq /home/ribamarfs/backups/ribamar_$(date +"%Y_%m_%d").zip html -x "html/down/*"
+zip -rq /home/ribamarfs/backups/ribamar_$(date +"%Y_%m_%d").zip html
+cp -f /home/ribamarfs/backupdiarios /home/ribamarfs/backup
+
+
+Item 6.13
+
+sudo apt update
+sudo apt install lynis -y
+
+Scan
+sudo lynis audit system
+
+sudo apt update 
+sudo apt install fail2ban -y
+
+Proteger SSH
+sudo nano /etc/fail2ban/jail.conf
+
+[sshd]
+
+enabled = true 
+
+port    = ssh 
+
+filter  = sshd 
+
+#logpath  = /var/log/auth.log 
+
+maxretry = 3 
+
+bantime  = 5m
+
+sudo service fail2ban restart
+
+Ver status
+sudo fail2ban-client status
+
+Ver logs
+sudo cat /var/log/fail2ban.log | grep Ban
+
+sudo apt update 
+sudo apt upgrade fail2ban
+
+
+Capítulo 7
+
+Aumentar tamanho do upload do PHP
+
+php.ini
+
+port_max_size - 16
+upload_max = 16
+
+
+Nginx – quando recebemos o erro
+
+413 Request Entity Too Large
+
+sudo nano /etc/nginx/nginx.conf
+
+# set client body size to 16M #
+client_max_body_size 16M;
+
+nginx -s reload
+
+sudo systemctl restart php8.2-fpm nginx
+```
+  
